@@ -68,7 +68,7 @@ def add_to_highscores(uid, name, trial, score):
     # To reset highscore, delete scores.csv and restart bot
 
 
-def jawab(_data, update):
+def answer(_data, update):
     global userdata, scores, highscores
     message = _data.message
     uid = str(message.chat.id)  # user id
@@ -76,44 +76,44 @@ def jawab(_data, update):
     ori_text = message.text
     if len(ori_text) > 1 and ori_text.startswith("/"):
         ori_text = ori_text[1:]
-    teks = ori_text.lower()
+    text = ori_text.lower()
 
     if uid not in userdata:
         reset(uid)
 
-    if teks == "scores":
+    if text == "scores":
         reset(uid)
         print_highscores(uid)
 
-    elif teks == "chat":
+    elif text == "chat":
         reset(uid)
         reply(uid, "<i>Type anything, I'll throw it back(wards).</i>")
 
-    elif teks == "play":
+    elif text == "play":
         reset(uid)
         userdata[uid]["mode"] = "play"
         reply(uid, "Guess a number in [{}, {}]!".format(userdata[uid]["min_value"], userdata[uid]["min_value"] + 19))
 
     elif userdata[uid]["mode"] == "play":
-        if teks.isdigit():
+        if text.isdigit():
             userdata[uid]["trials"] -= 1
-            tebakan = int(teks)
+            user_guess = int(text)
 
-            if tebakan != userdata[uid]["key"]:
+            if user_guess != userdata[uid]["key"]:
                 buttons = userdata[uid]["buttons"]
-                hapus = range(userdata[uid]["min_value"], tebakan + 1) \
-                    if tebakan < userdata[uid]["key"] else range(tebakan, userdata[uid]["min_value"] + 20)
+                hapus = range(userdata[uid]["min_value"], user_guess + 1) \
+                    if user_guess < userdata[uid]["key"] else range(user_guess, userdata[uid]["min_value"] + 20)
                 for h in hapus:
                     if str(h) in buttons[(h - userdata[uid]["min_value"]) // 5]:
                         buttons[(h - userdata[uid]["min_value"]) // 5].remove(str(h))
                 userdata[uid]["buttons"] = buttons
 
-                reply(uid, "Too {}!".format("small" if tebakan < userdata[uid]["key"] else "big"))
+                reply(uid, "Too {}!".format("small" if user_guess < userdata[uid]["key"] else "big"))
 
                 if userdata[uid]["trials"] <= 0:
-                    kunci = userdata[uid]["key"]
+                    user_key = userdata[uid]["key"]
                     reset(uid)
-                    reply(uid, "The answer is {}\nHit <b>Play</b> to retry".format(kunci))
+                    reply(uid, "The answer is {}\nHit <b>Play</b> to retry".format(user_key))
 
             else:
                 reply(uid, "Correct!")
@@ -148,7 +148,7 @@ def jawab(_data, update):
 if __name__ == '__main__':
     updater = Updater(bot=bot)
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(MessageHandler(Filters.text, jawab))
+    dispatcher.add_handler(MessageHandler(Filters.text, answer))
     print("@" + bot.username + " is ready.")
 
     if isfile(scorefile):
