@@ -1,5 +1,5 @@
 """
-Guess-My-Number Game for a Telegram Bot: 100% Python
+Guess-My-Number Game for Telegram Bot: 100% Python
 Created 2021 by Nugroho Fredivianus
 Just for fun, do what you please with this one! :)
 """
@@ -52,23 +52,22 @@ def print_highscores(uid):
 
 
 def add_to_highscores(uid, name, trial, score):
-    global highscores
-    scores.append(score)
-    scores.sort(reverse=True)
-
+    global scores, highscores
     if len(name) == 0:
         name = "user"
+
     highscores.append("{};{};{};{}".format(datetime.now().strftime("%d-%m-%Y"), name, 5 - trial, score))
     highscores.sort(key=lambda x: -float(x.split(";")[-1]))
     highscores = highscores[:10]
+    scores = [int(h.split(";")[-1]) for h in highscores]
 
     with open(scorefile, "w") as _f:
         _f.write("\n".join([header] + highscores))
     print_highscores(uid)
-    # To reset highscore, delete scores.csv and restart bot
+    # Want to reset highscore? Delete scores.csv and restart bot
 
 
-def answer(_data, update):
+def respond(_data, update):
     global userdata, scores, highscores
     message = _data.message
     uid = str(message.chat.id)  # user id
@@ -122,9 +121,6 @@ def answer(_data, update):
                     userdata[uid]["mode"] = "ask_name"
                     userdata[uid]["last_score"] = score
                     reply(uid, "Enter your name (max. 15 chars) for highscore")
-                    scores.append(score)
-                    scores.sort(reverse=True)
-                    scores = scores[:10]
                 else:
                     userdata[uid]["mode"] = "chat"
                     reset(uid)
@@ -148,7 +144,7 @@ def answer(_data, update):
 if __name__ == '__main__':
     updater = Updater(bot=bot)
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(MessageHandler(Filters.text, answer))
+    dispatcher.add_handler(MessageHandler(Filters.text, respond))
     print("@" + bot.username + " is ready.")
 
     if isfile(scorefile):
