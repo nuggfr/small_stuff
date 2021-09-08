@@ -12,8 +12,13 @@ from os.path import isfile
 from random import randrange
 
 # Save your token at this file, flat text no end-of-line
-with open("bot_token.txt", "r") as f:
-    token = f.read()
+try:
+    with open("bot_token.txt", "r") as f:
+        token = f.read()
+except:
+    print("ERROR:\nPlease put the token for your Telegram bot to a file named bot_token.txt")
+    exit()
+
 bot = Bot(token)
 
 scorefile = "score.csv"
