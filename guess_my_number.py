@@ -30,8 +30,8 @@ userdata = {}
 
 def reply(uid, teks):
     mode = userdata[uid]["mode"]
-    tombol = userdata[uid]["buttons"] if mode == "play" else [["Chat", "Play", "Scores"]]
-    markup = ReplyKeyboardMarkup(tombol, resize_keyboard=True) if mode != "ask_name" else ReplyKeyboardRemove()
+    buttons = userdata[uid]["buttons"] if mode == "play" else [["Chat", "Play", "Scores"]]
+    markup = ReplyKeyboardMarkup(buttons, resize_keyboard=True) if mode != "ask_name" else ReplyKeyboardRemove()
     bot.send_message(uid, parse_mode="HTML", text=teks, reply_markup=markup)
 
 
@@ -57,14 +57,14 @@ def add_to_highscores(uid, name, trial, score):
         name = "user"
 
     highscores.append("{};{};{};{}".format(datetime.now().strftime("%d-%m-%Y"), name, 5 - trial, score))
-    highscores.sort(key=lambda x: -float(x.split(";")[-1]))
+    highscores.sort(key=lambda x: -int(x.split(";")[-1]))
     highscores = highscores[:10]
     scores = [int(h.split(";")[-1]) for h in highscores]
 
     with open(scorefile, "w") as _f:
         _f.write("\n".join([header] + highscores))
     print_highscores(uid)
-    # Want to reset highscore? Delete scores.csv and restart bot
+    # Want to reset highscore? Delete scorefile and restart bot
 
 
 def respond(_data, update):
@@ -89,8 +89,7 @@ def respond(_data, update):
         reply(uid, "<i>Type anything, I'll throw it back(wards).</i>")
 
     elif text == "play":
-        reset(uid)
-        userdata[uid]["mode"] = "play"
+        reset(uid, "play")
         reply(uid, "Guess a number in [{}, {}]!".format(userdata[uid]["min_value"], userdata[uid]["min_value"] + 19))
 
     elif userdata[uid]["mode"] == "play":
@@ -100,11 +99,11 @@ def respond(_data, update):
 
             if user_guess != userdata[uid]["key"]:
                 buttons = userdata[uid]["buttons"]
-                hapus = range(userdata[uid]["min_value"], user_guess + 1) \
+                eliminate = range(userdata[uid]["min_value"], user_guess + 1) \
                     if user_guess < userdata[uid]["key"] else range(user_guess, userdata[uid]["min_value"] + 20)
-                for h in hapus:
-                    if str(h) in buttons[(h - userdata[uid]["min_value"]) // 5]:
-                        buttons[(h - userdata[uid]["min_value"]) // 5].remove(str(h))
+                for e in eliminate:
+                    if str(e) in buttons[(e - userdata[uid]["min_value"]) // 5]:
+                        buttons[(e - userdata[uid]["min_value"]) // 5].remove(str(e))
                 userdata[uid]["buttons"] = buttons
 
                 reply(uid, "Too {}!".format("small" if user_guess < userdata[uid]["key"] else "big"))
@@ -122,7 +121,6 @@ def respond(_data, update):
                     userdata[uid]["last_score"] = score
                     reply(uid, "Enter your name (max. 15 chars) for highscore")
                 else:
-                    userdata[uid]["mode"] = "chat"
                     reset(uid)
                     reply(uid, "Your score: {}\nHit <b>Play</b> to play again".format(score))
 
@@ -131,7 +129,6 @@ def respond(_data, update):
 
     elif userdata[uid]["mode"] == "ask_name":
         add_to_highscores(uid, ori_text[:15], userdata[uid]["trials"], userdata[uid]["last_score"])
-        userdata[uid]["mode"] = "chat"
         reset(uid)
         reply(uid, "Hit <b>Play</b> to play again")
 
@@ -151,7 +148,7 @@ if __name__ == '__main__':
         with open(scorefile, "r") as f:
             highscores = f.readlines()[1:]
         highscores = [h.replace("\n", "") for h in highscores]
-        scores = [float(h.split(";")[-1]) for h in highscores]
+        scores = [int(h.split(";")[-1]) for h in highscores]
         scores.sort(reverse=True)
 
     else:
